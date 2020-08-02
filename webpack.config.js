@@ -3,7 +3,9 @@ const { resolve } = require('path')
 const Html = require('html-webpack-plugin');   //  引入html-webpack-plugin插件
 const webpack = require('webpack');   //  引入html-webpack-plugin插件
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');   //  引入clean-webpack-plugin插件
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');  //合并css文件
+const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin');  //压缩css文件
+
 
 module.exports = {
     entry: path.join(__dirname, './src/index.js'), //入口文件
@@ -29,7 +31,6 @@ module.exports = {
                     {
                         loader: 'less-loader',
                         options: {
-
                             lessOptions: {
                                 modules: true,
                                 javascriptEnabled: true
@@ -48,7 +49,26 @@ module.exports = {
                     // 'style-loader',
                     'css-loader'
                 ]
-            }
+            },
+            {    
+            //处理css文件中`(png|svg|jpg|gif)` 格式的图片
+                test: /\.(png|svg|jpg|gif)$/,
+                use:{
+                    loader: "url-loader",
+                    options:{
+                        name: '[name]_[hash].[ext]',
+                        outputPath: 'images/',
+                        limit: 20480,
+                        esModule: false //解决打包之后的图片含有default的问题
+                    }
+                }
+           },
+           {
+                test: /\.html$/,
+                use: {
+                    loader: 'html-withimg-loader'
+                }
+            },
         ]
     },
     plugins: [ //打包需要的各种插件
@@ -64,6 +84,9 @@ module.exports = {
             filename: 'main.css'
         })
     ],
+    optimization: {
+        minimizer: [new OptimizeCssAssetsWebpackPlugin()]
+    },
     //本地服务器配置
     devServer: {
         contentBase: './build',  //服务器加载的文件目录
